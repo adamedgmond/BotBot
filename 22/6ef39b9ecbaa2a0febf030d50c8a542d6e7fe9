@@ -1,0 +1,21 @@
+README.md
+  s_c031739fe76495::t_76346ecad644dd 180-181,234
+src/db.ts
+  s_c031739fe76495::t_96bf7db26a35bf 133-137,372-379,382-384,389-395,401-403,405,407,410-424,426
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "226ef39b9ecbaa2a0febf030d50c8a542d6e7fe9",
+  "prompts": {},
+  "sessions": {
+    "s_c031739fe76495": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f7b8f431-4e80-4da3-a23c-f9d7446b58c9",
+        "model": "unknown"
+      },
+      "human_author": "Adam Edgmond <me@adamedgmond.com>"
+    }
+  }
+}
