@@ -24,7 +24,7 @@ export default {
 
   async fetch(request: Request, env: Env): Promise<Response> {
     if (request.method !== "POST") {
-      return new Response("BotBot — Transformers TCG match tracking.", {
+      return new Response("BotBot: Transformers TCG match tracking.", {
         status: 200,
       });
     }

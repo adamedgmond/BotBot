@@ -21,6 +21,9 @@ by yequari; see [what changed](#what-changed-since-seekerbot).
 | `/season start <name>` | **admins** | Close the season and start fresh |
 | `/season rename <name>` | **admins** | Rename the current season, keeping its matches |
 
+Running a beta? [TESTING.md](TESTING.md) is a Discord-only run-through for
+testers, with exact expected replies.
+
 ### Correcting the record
 
 `/undo` covers a fumbled score. Either player in the match can withdraw it

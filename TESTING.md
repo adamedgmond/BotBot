@@ -1,0 +1,165 @@
+# Beta testing BotBot
+
+A run-through you can do entirely from Discord. It takes about 30 minutes.
+
+Work through the rounds **in order**: several cases depend on what the earlier
+ones left behind.
+
+## What you need
+
+- **Two people minimum.** Call them **Admin** (has the Administrator role) and
+  **Player** (an ordinary member). Some cases only fail when the wrong person
+  runs them.
+- Both in the same channel.
+- A third person is useful but not required.
+
+Some replies are **private**, meaning only the person who ran the command sees
+them. Those are marked *(private)*. If a private reply shows up publicly, or a
+public one shows up privately, that is itself a bug worth reporting.
+
+## Reporting a problem
+
+Open an issue at <https://github.com/adamedgmond/BotBot/issues> with:
+
+1. The exact command you ran, including who ran it
+2. What you expected
+3. What actually happened, ideally a screenshot
+4. Which round and case number
+
+---
+
+## Round 1: empty server
+
+Do these **before anyone reports a match**. They only work once.
+
+- [ ] **1.1** `/season current` → "No season has started here yet; it opens
+      with the first `/report`."
+- [ ] **1.2** `/leaderboard` → "No matches have been recorded here yet."
+- [ ] **1.3** `/match recent` → "No matches have been recorded here yet."
+- [ ] **1.4** `/stats` → "No matches have been recorded here yet."
+- [ ] **1.5** `/undo` → *(private)* "You have no matches from the last 10
+      minutes to undo."
+
+## Round 2: opening a season
+
+- [ ] **2.1** Player runs `/season start "Nope"` → *(private)* "Only server
+      administrators can start a new season."
+- [ ] **2.2** Admin runs `/season start "Beta Test"` → "**Beta Test** has begun."
+- [ ] **2.3** `/leaderboard` → "No matches recorded in **Beta Test** yet."
+      Note this is **different** from the message in 1.2. A season now exists.
+- [ ] **2.4** `/season current` → names Beta Test with today's date.
+- [ ] **2.5** `/season list` → one entry, Beta Test, running to "now".
+
+## Round 3: reporting matches
+
+- [ ] **3.1** `/report player1:@Admin games1:2 player2:@Player games2:0` →
+      "Recorded in **Beta Test**: @Admin defeated @Player 2-0."
+- [ ] **3.2** Report a 1-1 → the wording changes to "drew with".
+- [ ] **3.3** Report where the first player loses → wording is "lost to".
+- [ ] **3.4** Report with the **same person** in both slots → *(private)* "A
+      player cannot play themselves."
+- [ ] **3.5** Report a 0-0 → *(private)* "At least one player needs to have won
+      a game."
+- [ ] **3.6** Report with `deck1` and `deck2` filled in → accepted normally.
+- [ ] **3.7** Try to type a score of 10 → Discord should refuse before it sends.
+- [ ] **3.8** `/leaderboard` → check the win-loss numbers by hand. Draws show as
+      a third number, so 1-0-1 means one win, no losses, one draw.
+- [ ] **3.9** `/stats` with no player → your own record.
+- [ ] **3.10** `/stats player:@Player` → their record.
+- [ ] **3.11** `/stats` on someone who has never played → "@them has no matches
+      in **Beta Test** yet."
+- [ ] **3.12** **Nobody gets pinged.** With several people on the leaderboard,
+      confirm no one gets a notification from it. Names should appear as
+      highlighted mentions but stay silent.
+
+## Round 4: withdrawing a match
+
+`/undo` works for **either player** in the match, not just whoever reported it.
+
+- [ ] **4.1** Admin reports a match, then immediately runs `/undo` → public
+      "**Match withdrawn by @Admin**" with the match struck through.
+- [ ] **4.2** Run `/undo` again → *(private)* "You have no matches from the last
+      10 minutes to undo."
+- [ ] **4.3** Admin reports a match against Player. **Player** runs `/undo` →
+      it works, and the notice names Player as the one who withdrew it while
+      still showing Admin as who reported it.
+- [ ] **4.4** A third person, not in any recent match, runs `/undo` →
+      *(private)* nothing to undo.
+- [ ] **4.5** Report a match, wait **more than 10 minutes**, then `/undo` →
+      *(private)* nothing to undo. Save this one for the end of your session.
+
+## Round 5: admin match removal
+
+- [ ] **5.1** `/match recent` → a list with ids like `#4`, newest first, each
+      showing both players, how long ago, and who reported it.
+- [ ] **5.2** Ids may **skip numbers**. That is expected, not a bug.
+- [ ] **5.3** Player runs `/match delete id:<real id>` → *(private)* "Only
+      server administrators can delete matches."
+- [ ] **5.4** Admin runs `/match delete id:999999` → *(private)* "No match
+      #999999 in this server. Check `/match recent`."
+- [ ] **5.5** Admin runs `/match delete id:<real id>` → a **public** message
+      showing the match with a red **Delete** button. Nothing deleted yet.
+- [ ] **5.6** **Player clicks that Delete button** → *(private)* "Only server
+      administrators can delete matches." The match survives and the button
+      stays. This is the most important case in this round.
+- [ ] **5.7** Admin clicks Delete → the prompt is replaced with "**Match deleted
+      by @Admin**" and the match struck through.
+- [ ] **5.8** Admin clicks the same button again → "Match #N no longer
+      exists; it may have been deleted already."
+- [ ] **5.9** `/leaderboard` → the deleted match is gone from the standings.
+
+## Round 6: rolling the season
+
+- [ ] **6.1** Player runs `/season rename name:"Nope"` → *(private)* "Only
+      server administrators can rename a season."
+- [ ] **6.2** Admin runs `/season rename name:"Beta Test Renamed"` → "**Beta
+      Test** is now **Beta Test Renamed**."
+- [ ] **6.3** `/leaderboard` → **unchanged**. Renaming must not lose matches.
+- [ ] **6.4** Admin runs `/season start name:"Season Two"` → "**Beta Test
+      Renamed** is closed and **Season Two** has begun."
+- [ ] **6.5** `/leaderboard` → empty, "No matches recorded in **Season Two**
+      yet."
+- [ ] **6.6** `/season list` → both seasons, the old one with an end date.
+- [ ] **6.7** Report a match, then `/leaderboard` → only the new match counts.
+- [ ] **6.8** Admin runs `/season start` with a name longer than 64 characters →
+      *(private)* "Season names are limited to 64 characters."
+
+## Round 7: odd inputs
+
+- [ ] **7.1** `/leaderboard count:1` → exactly one player.
+- [ ] **7.2** `/leaderboard timeframe:This week` → only recent matches.
+- [ ] **7.3** `/stats timeframe:This year` → works.
+- [ ] **7.4** Try any BotBot command in a **direct message** to the bot. Either
+      it is unavailable, or you get "BotBot only works inside a server."
+- [ ] **7.5** Report a match against a **bot account**. It is currently allowed.
+      Tell us if you think it should not be.
+- [ ] **7.6** Report the same match twice → both are recorded, as two separate
+      matches. Expected, but say so if it feels wrong.
+
+## Round 8: two servers (optional but valuable)
+
+Needs BotBot in a second server. This checks that servers cannot see each
+other's data, which is the thing hardest to verify any other way.
+
+- [ ] **8.1** Report matches in server B. Server A's `/leaderboard` and
+      `/match recent` do not show them.
+- [ ] **8.2** Take a match id from server A and run `/match delete` on it in
+      server B → "No match #N in this server."
+- [ ] **8.3** Each server has its own seasons. `/season list` in one does not
+      show the other's.
+
+---
+
+## Not covered here
+
+**Data retention.** If BotBot is removed from a server, that server's history is
+erased 30 days later. That runs on a weekly schedule and cannot be exercised by
+hand from Discord.
+
+**Load.** There is no rate limiting yet. If you want to hammer it, say so first.
+
+## Things we already know
+
+- Match ids are shared across all servers, so they skip numbers. Cosmetic.
+- Deleting a match cannot be undone. The announcement is the only record.
+- A season, once started, cannot be deleted. Rename works; removal does not.

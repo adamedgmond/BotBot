@@ -95,7 +95,7 @@ export async function handleComponent(
 
   if (!deleted || !target) {
     return updateMessage(
-      `Match \`#${matchId}\` no longer exists — it may have been deleted already.`,
+      `Match \`#${matchId}\` no longer exists; it may have been deleted already.`,
     );
   }
 
@@ -163,7 +163,7 @@ async function stats(
     return reply(`<@${target}> has no matches in **${season.name}** yet.`);
   }
   return reply(
-    `**<@${target}>** — ${season.name}${timeframe === "all" ? "" : ` (past ${timeframe})`}\n` +
+    `**<@${target}>** · ${season.name}${timeframe === "all" ? "" : ` (past ${timeframe})`}\n` +
       `${record(row)} across ${row.matches} match${row.matches === 1 ? "" : "es"}.`,
   );
 }
@@ -192,7 +192,7 @@ async function leaderboard(
   }
 
   const lines = rows.map(
-    (r, i) => `**${i + 1}.** <@${r.user_id}> — ${record(r)}`,
+    (r, i) => `**${i + 1}.** <@${r.user_id}> · ${record(r)}`,
   );
   return reply(
     `**${season.name}** leaderboard${timeframe === "all" ? "" : ` (past ${timeframe})`}\n` +
@@ -356,7 +356,7 @@ async function season(
       return reply(
         current
           ? `Current season: **${current.name}**, started <t:${current.started_at}:D>.`
-          : "No season has started here yet — it opens with the first `/report`.",
+          : "No season has started here yet; it opens with the first `/report`.",
       );
     }
 
@@ -365,7 +365,7 @@ async function season(
       if (seasons.length === 0) return reply("No seasons here yet.");
       const lines = seasons.map(
         (s) =>
-          `• **${s.name}** — <t:${s.started_at}:D> to ` +
+          `• **${s.name}** · <t:${s.started_at}:D> to ` +
           (s.ended_at ? `<t:${s.ended_at}:D>` : "_now_"),
       );
       return reply(lines.join("\n"));
