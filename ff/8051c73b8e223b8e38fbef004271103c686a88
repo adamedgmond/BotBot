@@ -1,0 +1,25 @@
+README.md
+  s_c031739fe76495::t_81998557f2830f 24-26
+TESTING.md
+  s_c031739fe76495::t_a215d30596adfd 1-165
+src/handlers.ts
+  s_c031739fe76495::t_9bbcb0c5343891 98,166,195,359,368
+src/index.ts
+  s_c031739fe76495::t_219d56b1662d12 27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ff8051c73b8e223b8e38fbef004271103c686a88",
+  "prompts": {},
+  "sessions": {
+    "s_c031739fe76495": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f7b8f431-4e80-4da3-a23c-f9d7446b58c9",
+        "model": "unknown"
+      },
+      "human_author": "Adam Edgmond <me@adamedgmond.com>"
+    }
+  }
+}
