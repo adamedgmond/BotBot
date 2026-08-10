@@ -1,0 +1,51 @@
+.gitignore
+  s_c031739fe76495::t_bce0263f506673 1-6
+LICENSE
+  s_c031739fe76495::t_b73735fb6d7b09 1-21
+README.md
+  s_c031739fe76495::t_f78fd678892016 1-233
+migrations/0001_init.sql
+  s_c031739fe76495::t_27399bdacdb5fd 1-42
+migrations/0002_guild_lifecycle.sql
+  s_c031739fe76495::t_e64b53f91c4105 1-34
+package-lock.json
+  s_c031739fe76495::t_be87668c883167 1-1654
+package.json
+  s_c031739fe76495::t_c576a34b2ca4d4 1-22
+scripts/commands.mjs
+  s_c031739fe76495::t_2cf3054adfe2a1 1-103
+scripts/register.mjs
+  s_c031739fe76495::t_b4fdfc625c0bd6 1-43
+src/db.ts
+  s_c031739fe76495::t_f20c1f904099c7 1-458
+src/handlers.ts
+  s_c031739fe76495::t_72758275d7cb42 1-384
+src/index.ts
+  s_c031739fe76495::t_6a1e71fba6edc2 1-76
+src/reconcile.ts
+  s_c031739fe76495::t_641f0fd01a702e 1-116
+src/respond.ts
+  s_c031739fe76495::t_8340f77becd8e8 1-59
+src/types.ts
+  s_c031739fe76495::t_17c810ff6e8e0b 1-60
+tsconfig.json
+  s_c031739fe76495::t_2b8a88ebdf4798 1-15
+wrangler.jsonc
+  s_c031739fe76495::t_0a70468c96f43f 1-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "1be0a6390fdb309eb3a41f20f2f42c7646855d28",
+  "prompts": {},
+  "sessions": {
+    "s_c031739fe76495": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f7b8f431-4e80-4da3-a23c-f9d7446b58c9",
+        "model": "unknown"
+      },
+      "human_author": "Adam Edgmond <me@adamedgmond.com>"
+    }
+  }
+}
