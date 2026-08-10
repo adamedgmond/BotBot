@@ -113,8 +113,12 @@ Caveats:
    ```sh
    npm run register -- <your_guild_id>            # development
    npm run register -- <your_guild_id> --clear    # before going global
-   npm run register                               # global, for release
+   npm run register -- --global                   # for release
    ```
+
+   The `--` is required; without it npm swallows the flags and the script sees
+   no arguments. Global registration is behind an explicit `--global` for that
+   reason, so a swallowed flag cannot publish commands by accident.
 
    Clear the test guild's copies before registering globally. Guild and global
    registrations stack rather than replace, so that server would otherwise see

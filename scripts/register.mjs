@@ -1,34 +1,64 @@
 // Registers slash commands with Discord. Run this after changing commands.mjs;
 // the Worker itself never registers anything.
 //
-//   node scripts/register.mjs                    -> global (cached up to ~1 hour)
-//   node scripts/register.mjs <guild_id>         -> that guild only, instantly
-//   node scripts/register.mjs <guild_id> --clear -> remove that guild's copies
+//   npm run register -- <guild_id>           -> that guild only, instantly
+//   npm run register -- <guild_id> --clear   -> remove that guild's copies
+//   npm run register -- --global             -> global, cached up to ~1 hour
 //
-// Clear a guild's commands before going global, or that guild sees every
+// The `--` after `npm run register` is required: without it npm swallows any
+// flags and this script sees an empty argv. Global registration is therefore
+// behind an explicit --global rather than being the zero-argument default, so
+// a swallowed flag can never publish commands by accident.
+//
+// Clear a test guild's commands before going global, or that guild sees every
 // command twice: guild and global registrations stack rather than replace.
 //
 // Requires DISCORD_TOKEN and DISCORD_APPLICATION_ID in the environment.
 
 import { commands } from "./commands.mjs";
 
-const token = process.env.DISCORD_TOKEN;
-const appId = process.env.DISCORD_APPLICATION_ID;
+const USAGE = `Usage:
+  npm run register -- <guild_id>           register to one guild
+  npm run register -- <guild_id> --clear   remove that guild's commands
+  npm run register -- --global             register globally
 
-if (!token || !appId) {
-  console.error("Set DISCORD_TOKEN and DISCORD_APPLICATION_ID first.");
+Note the "--": npm swallows flags without it.`;
+
+function fail(message) {
+  console.error(message);
   process.exit(1);
 }
 
-// Skip flags when looking for the guild id, or `--clear` alone would be read
-// as the guild and PUT an empty list to a nonsense endpoint.
 const args = process.argv.slice(2);
-const guildId = args.find((a) => !a.startsWith("--"));
-const clear = args.includes("--clear");
+const KNOWN_FLAGS = new Set(["--clear", "--global"]);
 
+const unknown = args.filter((a) => a.startsWith("-") && !KNOWN_FLAGS.has(a));
+if (unknown.length > 0) {
+  // A typo like --clera must not quietly fall through to re-registering.
+  fail(`Unknown option: ${unknown.join(", ")}\n\n${USAGE}`);
+}
+
+const positional = args.filter((a) => !a.startsWith("-"));
+if (positional.length > 1) {
+  fail(`Expected at most one guild id, got: ${positional.join(", ")}`);
+}
+
+const guildId = positional[0];
+const clear = args.includes("--clear");
+const isGlobal = args.includes("--global");
+
+if (!guildId && !isGlobal) fail(USAGE);
+if (guildId && isGlobal) {
+  fail("Pass a guild id or --global, not both.");
+}
 if (clear && !guildId) {
-  console.error("--clear needs a guild id. Refusing to wipe global commands.");
-  process.exit(1);
+  fail("--clear needs a guild id. Refusing to wipe global commands.");
+}
+
+const token = process.env.DISCORD_TOKEN;
+const appId = process.env.DISCORD_APPLICATION_ID;
+if (!token || !appId) {
+  fail("Set DISCORD_TOKEN and DISCORD_APPLICATION_ID first.");
 }
 
 const url = guildId

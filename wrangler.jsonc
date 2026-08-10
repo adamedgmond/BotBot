@@ -18,8 +18,13 @@
       "migrations_dir": "migrations"
     }
   ]
-  // Secrets (set via `wrangler secret put`, never committed):
-  //   DISCORD_PUBLIC_KEY      - Developer Portal > General Information
-  //   DISCORD_TOKEN           - Developer Portal > Bot  (only needed by scripts/register.mjs)
-  //   DISCORD_APPLICATION_ID  - Developer Portal > General Information
+  // Worker secrets (set via `wrangler secret put`, never committed):
+  //   DISCORD_PUBLIC_KEY  - Developer Portal > General Information. Verifies
+  //                         every incoming interaction signature.
+  //   DISCORD_TOKEN       - Developer Portal > Bot. Required by the weekly
+  //                         scheduled() reconcile; without it retention throws
+  //                         a 401 every week and silently stops running.
+  //
+  // Local-only, for scripts/register.mjs (a .env or your shell, not a secret):
+  //   DISCORD_TOKEN, DISCORD_APPLICATION_ID
 }
