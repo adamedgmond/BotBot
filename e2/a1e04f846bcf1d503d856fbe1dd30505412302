@@ -1,0 +1,23 @@
+README.md
+  s_c031739fe76495::t_faff79c8063617 116,119-122
+scripts/register.mjs
+  s_c031739fe76495::t_133e19eeb81d23 4-6,8-13,20-23,25-28,33-46,48,50-53,55-61
+wrangler.jsonc
+  s_c031739fe76495::t_c9f018d14ee67b 21-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "e2a1e04f846bcf1d503d856fbe1dd30505412302",
+  "prompts": {},
+  "sessions": {
+    "s_c031739fe76495": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f7b8f431-4e80-4da3-a23c-f9d7446b58c9",
+        "model": "unknown"
+      },
+      "human_author": "Adam Edgmond <me@adamedgmond.com>"
+    }
+  }
+}
