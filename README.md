@@ -177,9 +177,8 @@ cross-guild leak require two independent mistakes.
 
 ## Data retention
 
-**Removing the bot is the only thing that deletes data.** A server that keeps
-BotBot installed keeps its history for as long as it wants it, however long it
-goes between matches. Quiet is not the same as finished.
+A server that keeps BotBot installed keeps its history for as long as it wants it, 
+however long it goes between matches.
 
 When the bot is removed, that server's data is erased 30 days later. There is no
 gateway to deliver a `GUILD_DELETE` event, so a weekly Cron Trigger reconciles
@@ -233,8 +232,3 @@ fork, but its data model, one row per player per match, is SeekerBot's design.
   fit without contortions
 - Undo scoped to either player in the match, which is SeekerBot's rule. The
   loser is often the one who notices a wrong score.
-
-### Status
-
-Built and tested, **not yet deployed**: no matches have been recorded with it.
-SeekerBot has years of real use behind it.

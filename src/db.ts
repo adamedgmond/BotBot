@@ -130,6 +130,11 @@ export async function rollSeason(
   guildId: string,
   name: string,
 ): Promise<void> {
+  // `/season start` is the documented first thing an admin runs, before any
+  // report, so this can be the write that first gives a guild data. Register it
+  // or retention would never see the guild at all.
+  await registerGuild(db, guildId);
+
   const ts = now();
   await db.batch([
     db
@@ -364,32 +369,61 @@ export async function registerGuild(
     .run();
 }
 
+/**
+ * Every guild we hold data for.
+ *
+ * Unions `seasons` rather than trusting `guilds` alone: a guild is only
+ * reapable if retention can see it, so a write path that forgets to register
+ * would otherwise leave data that lives forever. Seasons are the root of the
+ * data model, so anything with matches has a season.
+ */
 export async function trackedGuildIds(db: D1Database): Promise<string[]> {
   const { results } = await db
-    .prepare("SELECT guild_id FROM guilds")
+    .prepare(
+      "SELECT guild_id FROM guilds UNION SELECT guild_id FROM seasons",
+    )
     .all<{ guild_id: string }>();
   return results.map((r) => r.guild_id);
 }
 
-/** Flags guilds for eventual purging. Already-flagged guilds keep their original
- * timestamp, so the grace period can't be extended by repeated sweeps. */
+/**
+ * Flags guilds for eventual purging, returning how many were newly flagged.
+ *
+ * Upserts rather than updates, so a guild that holds data without a `guilds`
+ * row still gets flagged. COALESCE keeps any original timestamp, so repeated
+ * sweeps cannot extend the grace period.
+ */
 export async function markForPurge(
   db: D1Database,
   guildIds: string[],
   ts: number,
 ): Promise<number> {
-  let marked = 0;
+  if (guildIds.length === 0) return 0;
+
+  let alreadyFlagged = 0;
   for (const chunk of chunked(guildIds)) {
-    const { meta } = await db
+    const row = await db
       .prepare(
-        `UPDATE guilds SET marked_for_purge_at = ? WHERE marked_for_purge_at IS NULL ` +
+        `SELECT COUNT(*) AS n FROM guilds WHERE marked_for_purge_at IS NOT NULL ` +
           `AND guild_id IN (${placeholders(chunk.length)})`,
       )
-      .bind(ts, ...chunk)
-      .run();
-    marked += meta.changes ?? 0;
+      .bind(...chunk)
+      .first<{ n: number }>();
+    alreadyFlagged += row?.n ?? 0;
+
+    await db.batch(
+      chunk.map((id) =>
+        db
+          .prepare(
+            "INSERT INTO guilds (guild_id, first_seen, last_seen, marked_for_purge_at) " +
+              "VALUES (?1, ?2, ?2, ?2) ON CONFLICT (guild_id) DO UPDATE SET " +
+              "marked_for_purge_at = COALESCE(guilds.marked_for_purge_at, ?2)",
+          )
+          .bind(id, ts),
+      ),
+    );
   }
-  return marked;
+  return guildIds.length - alreadyFlagged;
 }
 
 /**
