@@ -111,9 +111,14 @@ Caveats:
    propagate immediately, global ones can take up to an hour to appear.
 
    ```sh
-   npm run register -- <your_guild_id>   # development
-   npm run register                      # global, for release
+   npm run register -- <your_guild_id>            # development
+   npm run register -- <your_guild_id> --clear    # before going global
+   npm run register                               # global, for release
    ```
+
+   Clear the test guild's copies before registering globally. Guild and global
+   registrations stack rather than replace, so that server would otherwise see
+   every command listed twice.
 
 5. **Deploy**, then set the Worker URL as the **Interactions Endpoint URL** in
    the Developer Portal. Discord probes it with an intentionally invalid
