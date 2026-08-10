@@ -1,15 +1,8 @@
 import * as db from "./db.js";
 
 /**
- * A guild is flagged for purging once it has gone this long without a single
- * command. Servers that install a match tracker are servers that actively play,
- * so total silence for this long means abandoned, not off-season.
- */
-export const DORMANCY_SECONDS = 5 * 365 * 86400;
-
-/**
- * How long a flagged guild survives before its data is erased. Long enough to
- * absorb an accidental kick, a server rebuild, or a bad reconcile.
+ * How long a guild's data survives after we notice the bot was removed. Long
+ * enough to absorb an accidental kick, a server rebuild, or a bad reconcile.
  */
 export const GRACE_PERIOD_SECONDS = 30 * 86400;
 
@@ -18,8 +11,7 @@ const PAGE_SIZE = 200;
 
 export interface ReconcileResult {
   installed: number;
-  flaggedRemoved: number;
-  flaggedDormant: number;
+  flagged: number;
   unflagged: number;
   purged: number;
 }
@@ -57,13 +49,15 @@ async function fetchInstalledGuilds(token: string): Promise<Set<string>> {
 }
 
 /**
- * Flags guilds that have been removed or have gone dormant, then purges
- * anything flagged longer than the grace period.
+ * Flags guilds that have removed the bot, then purges anything flagged for
+ * longer than the grace period.
  *
- * Deletion is two-phase on purpose. A guild is only flagged when first
- * detected and erased a grace period later, so a transient API failure, a bot
- * removed and re-added the same week, or a server returning from a long
- * hiatus all cost nothing.
+ * Removal is the only deletion trigger: a guild that keeps BotBot installed
+ * keeps its history indefinitely, however long it goes between matches.
+ *
+ * Deletion is two-phase on purpose. A guild is only flagged when first detected
+ * as gone and erased a grace period later, so a transient API failure or a bot
+ * removed and re-added the same week costs nothing.
  */
 export async function reconcileGuilds(
   database: D1Database,
@@ -82,21 +76,10 @@ export async function reconcileGuilds(
   }
 
   const now = db.now();
-  const dormantCutoff = now - DORMANCY_SECONDS;
-
   const removed = tracked.filter((id) => !installed.has(id));
-  const flaggedRemoved = await db.markForPurge(database, removed, now);
-  const unflagged = await db.markStillInstalled(
-    database,
-    [...installed],
-    now,
-    dormantCutoff,
-  );
 
-  // Run after markStillInstalled so newly-tracked guilds are visible, and so a
-  // guild can't be flagged removed and dormant in the same pass.
-  const dormant = await db.dormantGuilds(database, dormantCutoff);
-  const flaggedDormant = await db.markForPurge(database, dormant, now);
+  const flagged = await db.markForPurge(database, removed, now);
+  const unflagged = await db.markStillInstalled(database, [...installed], now);
 
   const expired = await db.guildsReadyToPurge(
     database,
@@ -106,11 +89,5 @@ export async function reconcileGuilds(
     await db.purgeGuild(database, guildId);
   }
 
-  return {
-    installed: installed.size,
-    flaggedRemoved,
-    flaggedDormant,
-    unflagged,
-    purged: expired.length,
-  };
+  return { installed: installed.size, flagged, unflagged, purged: expired.length };
 }

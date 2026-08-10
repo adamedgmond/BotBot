@@ -38,6 +38,8 @@ export async function ensureSeason(
   db: D1Database,
   guildId: string,
 ): Promise<Season> {
+  await registerGuild(db, guildId);
+
   const existing = await currentSeason(db, guildId);
   if (existing) return existing;
 
@@ -341,20 +343,22 @@ function chunked<T>(items: T[]): T[][] {
 const placeholders = (n: number) => new Array(n).fill("?").join(",");
 
 /**
- * Records real usage of the bot in this guild. Called for every command, so
- * reading a leaderboard counts as activity just as much as reporting a match.
- * Clears any pending purge: a guild that comes back rescues itself.
+ * Registers a guild so departure detection covers it.
+ *
+ * Called from ensureSeason, on the first report rather than on every command:
+ * the weekly reconcile keeps this table current on its own, and this only has
+ * to close the gap where a guild installs, records matches, and removes the bot
+ * between two reconciles.
  */
-export async function touchGuild(
+export async function registerGuild(
   db: D1Database,
   guildId: string,
 ): Promise<void> {
   const ts = now();
   await db
     .prepare(
-      "INSERT INTO guilds (guild_id, first_seen, last_seen, last_active) VALUES (?1, ?2, ?2, ?2) " +
-        "ON CONFLICT (guild_id) DO UPDATE SET last_seen = ?2, last_active = ?2, " +
-        "marked_for_purge_at = NULL",
+      "INSERT INTO guilds (guild_id, first_seen, last_seen) VALUES (?1, ?2, ?2) " +
+        "ON CONFLICT (guild_id) DO UPDATE SET last_seen = ?2, marked_for_purge_at = NULL",
     )
     .bind(guildId, ts)
     .run();
@@ -389,27 +393,25 @@ export async function markForPurge(
 }
 
 /**
- * Confirms the bot is still installed in these guilds, without touching
- * last_active -- installation is not usage.
+ * Confirms the bot is still installed in these guilds, clearing any pending
+ * purge: being present disproves the only reason a guild is ever flagged.
  *
- * Unflags any that were pending purge for having been removed. Note this does
- * NOT rescue a dormant guild: being present is why it was flagged. Only a real
- * command, via touchGuild(), clears that.
+ * Returns how many were flagged and are now cleared, i.e. removed and re-added
+ * inside the grace period, which is the case the two-phase delete exists for.
  */
 export async function markStillInstalled(
   db: D1Database,
   guildIds: string[],
   ts: number,
-  dormantCutoff: number,
 ): Promise<number> {
   let revived = 0;
   for (const chunk of chunked(guildIds)) {
     const row = await db
       .prepare(
         `SELECT COUNT(*) AS n FROM guilds WHERE marked_for_purge_at IS NOT NULL ` +
-          `AND last_active >= ? AND guild_id IN (${placeholders(chunk.length)})`,
+          `AND guild_id IN (${placeholders(chunk.length)})`,
       )
-      .bind(dormantCutoff, ...chunk)
+      .bind(...chunk)
       .first<{ n: number }>();
     revived += row?.n ?? 0;
 
@@ -417,30 +419,15 @@ export async function markStillInstalled(
       chunk.map((id) =>
         db
           .prepare(
-            "INSERT INTO guilds (guild_id, first_seen, last_seen, last_active) VALUES (?1, ?2, ?2, ?2) " +
+            "INSERT INTO guilds (guild_id, first_seen, last_seen) VALUES (?1, ?2, ?2) " +
               "ON CONFLICT (guild_id) DO UPDATE SET last_seen = ?2, " +
-              "marked_for_purge_at = CASE WHEN guilds.last_active >= ?3 THEN NULL " +
-              "ELSE guilds.marked_for_purge_at END",
+              "marked_for_purge_at = NULL",
           )
-          .bind(id, ts, dormantCutoff),
+          .bind(id, ts),
       ),
     );
   }
   return revived;
-}
-
-/** Installed guilds with no command use since `cutoff`. */
-export async function dormantGuilds(
-  db: D1Database,
-  cutoff: number,
-): Promise<string[]> {
-  const { results } = await db
-    .prepare(
-      "SELECT guild_id FROM guilds WHERE last_active < ? AND marked_for_purge_at IS NULL",
-    )
-    .bind(cutoff)
-    .all<{ guild_id: string }>();
-  return results.map((r) => r.guild_id);
 }
 
 /** Guilds flagged before `cutoff`, whose grace period has now run out. */

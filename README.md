@@ -177,26 +177,23 @@ cross-guild leak require two independent mistakes.
 
 ## Data retention
 
-A weekly Cron Trigger flags a server for cleanup in two cases:
+**Removing the bot is the only thing that deletes data.** A server that keeps
+BotBot installed keeps its history for as long as it wants it, however long it
+goes between matches. Quiet is not the same as finished.
 
-- **The bot was removed.** With no gateway to deliver `GUILD_DELETE`, the job
-  reconciles the `guilds` table against `GET /users/@me/guilds`.
-- **The server went dormant.** Five years without a single command.
-
-Flagged data is erased 30 days later, never immediately. A server that returns
-clears its own flag on the next command, and re-flagging keeps the original
-timestamp so the grace period can't drift.
-
-The dormancy clock runs on `last_active`, which only a real command updates.
-`last_seen` is refreshed weekly by the reconcile job and deliberately does *not*
-count: being installed is not the same as being used. Read-only commands do
-count, since checking the standings means the server is still alive.
+When the bot is removed, that server's data is erased 30 days later. There is no
+gateway to deliver a `GUILD_DELETE` event, so a weekly Cron Trigger reconciles
+the `guilds` table against `GET /users/@me/guilds`, which is ground truth for
+where the bot is installed. Deletion is two-phase: a server is flagged on the
+first reconcile that misses it and erased a grace period later, so a bot removed
+and re-added the same week loses nothing. Re-flagging keeps the original
+timestamp, so the grace period cannot drift.
 
 Two safeguards in [`src/reconcile.ts`](src/reconcile.ts): a partial guild fetch
 throws rather than returning what it has, and a successful response listing zero
 servers while local data exists aborts the run (that shape means a revoked
-token, not a mass exodus). Both thresholds are constants at the top of that
-file; shorten `DORMANCY_SECONDS` locally to watch the sweep run.
+token, not a mass exodus). Nothing is deleted unless ground truth was fully
+established.
 
 ## What changed since SeekerBot
 
@@ -213,7 +210,8 @@ fork, but its data model, one row per player per match, is SeekerBot's design.
 - **Every deletion is announced,** naming who removed what. Since the row is
   gone, that message is the receipt.
 - **Optional deck tracking** on `/report`, recorded per player.
-- **Data doesn't outlive its use.** See [Data retention](#data-retention).
+- **Data doesn't outlive its welcome.** Removing the bot from a server erases
+  that server's history. See [Data retention](#data-retention).
 
 ### Improved
 

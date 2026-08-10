@@ -44,11 +44,6 @@ export async function handle(
 
   const name = interaction.data?.name;
 
-  // Any command counts as activity, including read-only ones -- checking the
-  // standings means the server is still alive. This also clears a pending
-  // dormancy purge, so a returning server rescues itself.
-  await db.touchGuild(env.DB, guildId);
-
   switch (name) {
     case "report":
       return report(interaction, env.DB, guildId, callerId);
@@ -87,8 +82,6 @@ export async function handleComponent(
     throw new UserError("Only server administrators can delete matches.");
   }
   const actor = interaction.member?.user.id;
-
-  await db.touchGuild(env.DB, guildId);
 
   const matchId = Number(customId.slice(DELETE_PREFIX.length));
   if (!Number.isInteger(matchId)) {
