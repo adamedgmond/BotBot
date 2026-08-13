@@ -1,0 +1,23 @@
+migrations/0002_guild_lifecycle.sql
+  s_c031739fe76495::t_81ba2934f3eb2a 9,20
+src/db.ts
+  s_c031739fe76495::t_cb989ac0d005e7 1-5,89-90,217,327,351-352,354-357,365-366,368,389-391,395-398,405,407,409-417,420-423,425,441,443-444,448-457
+src/reconcile.ts
+  s_c031739fe76495::t_b130228423fe7d 82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "59cdca63c4d478f33ccd9643ef2fda13b2378334",
+  "prompts": {},
+  "sessions": {
+    "s_c031739fe76495": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f7b8f431-4e80-4da3-a23c-f9d7446b58c9",
+        "model": "unknown"
+      },
+      "human_author": "Adam Edgmond <me@adamedgmond.com>"
+    }
+  }
+}
