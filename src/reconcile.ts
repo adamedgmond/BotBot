@@ -79,7 +79,7 @@ export async function reconcileGuilds(
   const removed = tracked.filter((id) => !installed.has(id));
 
   const flagged = await db.markForPurge(database, removed, now);
-  const unflagged = await db.markStillInstalled(database, [...installed], now);
+  const unflagged = await db.markStillInstalled(database, [...installed]);
 
   const expired = await db.guildsReadyToPurge(
     database,

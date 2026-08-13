@@ -6,10 +6,7 @@
 -- keeps its history for as long as it wants it, however quiet it gets.
 
 CREATE TABLE guilds (
-  guild_id   TEXT PRIMARY KEY,
-  first_seen INTEGER NOT NULL,
-  -- Last reconcile that confirmed we are still installed.
-  last_seen  INTEGER NOT NULL,
+  guild_id TEXT PRIMARY KEY,
   -- NULL normally. Set when the guild is found to have removed the bot; the
   -- row and all its data are erased after the grace period. Being seen again
   -- clears it, so a bot removed and re-added loses nothing.
@@ -20,7 +17,4 @@ CREATE INDEX idx_guilds_marked ON guilds (marked_for_purge_at)
   WHERE marked_for_purge_at IS NOT NULL;
 
 -- Backfill so guilds created before this migration are tracked.
-INSERT INTO guilds (guild_id, first_seen, last_seen, marked_for_purge_at)
-SELECT guild_id, MIN(started_at), MIN(started_at), NULL
-FROM seasons
-GROUP BY guild_id;
+INSERT INTO guilds (guild_id) SELECT DISTINCT guild_id FROM seasons;

@@ -1,5 +1,8 @@
-// Every function here takes guildId first and threads it into the WHERE clause.
-// There is no query in this file that can read across guilds.
+// Guild scoping is the invariant here: no query in this file can read or write
+// another guild's rows. Anything taking a guildId threads it into the WHERE
+// clause; the few that do not (trackedGuildIds, guildsReadyToPurge, and the
+// purge-flag helpers) operate on the guilds table alone, which holds no match
+// data.
 
 export interface Season {
   season_id: number;
@@ -83,6 +86,8 @@ export async function reportMatch(
   ]);
 }
 
+// Binds ?1 guild_id, ?2 season_id, ?3 since. Callers continue numbering at ?4,
+// so adding a parameter here means renumbering both of them.
 const STATS_SELECT = `
   SELECT r.user_id AS user_id,
          SUM(CASE WHEN r.games > o.games THEN 1 ELSE 0 END) AS wins,
@@ -202,7 +207,6 @@ export async function undoLast(
   db: D1Database,
   guildId: string,
   userId: string,
-  window = UNDO_WINDOW_SECONDS,
 ): Promise<MatchDetail | null> {
   const match = await db
     .prepare(
@@ -210,7 +214,7 @@ export async function undoLast(
         "WHERE m.guild_id = ? AND r.user_id = ? AND m.played_at >= ? " +
         "ORDER BY m.played_at DESC LIMIT 1",
     )
-    .bind(guildId, userId, now() - window)
+    .bind(guildId, userId, now() - UNDO_WINDOW_SECONDS)
     .first<{ match_id: number }>();
   if (!match) return null;
 
@@ -320,12 +324,8 @@ export async function purgeGuild(
   db: D1Database,
   guildId: string,
 ): Promise<void> {
+  // reports rows go with the matches via ON DELETE CASCADE.
   await db.batch([
-    db
-      .prepare(
-        "DELETE FROM reports WHERE match_id IN (SELECT match_id FROM matches WHERE guild_id = ?)",
-      )
-      .bind(guildId),
     db.prepare("DELETE FROM matches WHERE guild_id = ?").bind(guildId),
     db.prepare("DELETE FROM seasons WHERE guild_id = ?").bind(guildId),
     db.prepare("DELETE FROM guilds WHERE guild_id = ?").bind(guildId),
@@ -348,24 +348,24 @@ function chunked<T>(items: T[]): T[][] {
 const placeholders = (n: number) => new Array(n).fill("?").join(",");
 
 /**
- * Registers a guild so departure detection covers it.
+ * Registers a guild so departure detection covers it, and clears any pending
+ * purge.
  *
- * Called from ensureSeason, on the first report rather than on every command:
- * the weekly reconcile keeps this table current on its own, and this only has
- * to close the gap where a guild installs, records matches, and removes the bot
- * between two reconciles.
+ * Called from the write paths that can give a guild its first data, currently
+ * ensureSeason and rollSeason. The weekly reconcile keeps this table current on
+ * its own; this only closes the gap where a guild installs, records something,
+ * and removes the bot between two reconciles.
  */
 export async function registerGuild(
   db: D1Database,
   guildId: string,
 ): Promise<void> {
-  const ts = now();
   await db
     .prepare(
-      "INSERT INTO guilds (guild_id, first_seen, last_seen) VALUES (?1, ?2, ?2) " +
-        "ON CONFLICT (guild_id) DO UPDATE SET last_seen = ?2, marked_for_purge_at = NULL",
+      "INSERT INTO guilds (guild_id) VALUES (?) " +
+        "ON CONFLICT (guild_id) DO UPDATE SET marked_for_purge_at = NULL",
     )
-    .bind(guildId, ts)
+    .bind(guildId)
     .run();
 }
 
@@ -386,44 +386,43 @@ export async function trackedGuildIds(db: D1Database): Promise<string[]> {
   return results.map((r) => r.guild_id);
 }
 
+/** `(?),(?),(?)` for a multi-row VALUES list of single-column rows. */
+const rowsOf1 = (n: number) => new Array(n).fill("(?)").join(",");
+
 /**
  * Flags guilds for eventual purging, returning how many were newly flagged.
  *
- * Upserts rather than updates, so a guild that holds data without a `guilds`
- * row still gets flagged. COALESCE keeps any original timestamp, so repeated
- * sweeps cannot extend the grace period.
+ * Two statements, in this order. The insert creates rows for guilds that hold
+ * data without ever having been registered, already flagged. The update then
+ * flags known guilds, and its `IS NULL` predicate is what stops a repeated
+ * sweep from resetting an existing flag and extending the grace period.
  */
 export async function markForPurge(
   db: D1Database,
   guildIds: string[],
   ts: number,
 ): Promise<number> {
-  if (guildIds.length === 0) return 0;
-
-  let alreadyFlagged = 0;
+  let flagged = 0;
   for (const chunk of chunked(guildIds)) {
-    const row = await db
+    const inserted = await db
       .prepare(
-        `SELECT COUNT(*) AS n FROM guilds WHERE marked_for_purge_at IS NOT NULL ` +
+        `INSERT INTO guilds (guild_id, marked_for_purge_at) VALUES ` +
+          `${chunk.map(() => "(?, ?)").join(",")} ON CONFLICT DO NOTHING`,
+      )
+      .bind(...chunk.flatMap((id) => [id, ts]))
+      .run();
+
+    const updated = await db
+      .prepare(
+        `UPDATE guilds SET marked_for_purge_at = ? WHERE marked_for_purge_at IS NULL ` +
           `AND guild_id IN (${placeholders(chunk.length)})`,
       )
-      .bind(...chunk)
-      .first<{ n: number }>();
-    alreadyFlagged += row?.n ?? 0;
+      .bind(ts, ...chunk)
+      .run();
 
-    await db.batch(
-      chunk.map((id) =>
-        db
-          .prepare(
-            "INSERT INTO guilds (guild_id, first_seen, last_seen, marked_for_purge_at) " +
-              "VALUES (?1, ?2, ?2, ?2) ON CONFLICT (guild_id) DO UPDATE SET " +
-              "marked_for_purge_at = COALESCE(guilds.marked_for_purge_at, ?2)",
-          )
-          .bind(id, ts),
-      ),
-    );
+    flagged += (inserted.meta.changes ?? 0) + (updated.meta.changes ?? 0);
   }
-  return guildIds.length - alreadyFlagged;
+  return flagged;
 }
 
 /**
@@ -436,30 +435,26 @@ export async function markForPurge(
 export async function markStillInstalled(
   db: D1Database,
   guildIds: string[],
-  ts: number,
 ): Promise<number> {
   let revived = 0;
   for (const chunk of chunked(guildIds)) {
-    const row = await db
+    const cleared = await db
       .prepare(
-        `SELECT COUNT(*) AS n FROM guilds WHERE marked_for_purge_at IS NOT NULL ` +
+        `UPDATE guilds SET marked_for_purge_at = NULL ` +
+          `WHERE marked_for_purge_at IS NOT NULL ` +
           `AND guild_id IN (${placeholders(chunk.length)})`,
       )
       .bind(...chunk)
-      .first<{ n: number }>();
-    revived += row?.n ?? 0;
+      .run();
+    revived += cleared.meta.changes ?? 0;
 
-    await db.batch(
-      chunk.map((id) =>
-        db
-          .prepare(
-            "INSERT INTO guilds (guild_id, first_seen, last_seen) VALUES (?1, ?2, ?2) " +
-              "ON CONFLICT (guild_id) DO UPDATE SET last_seen = ?2, " +
-              "marked_for_purge_at = NULL",
-          )
-          .bind(id, ts),
-      ),
-    );
+    await db
+      .prepare(
+        `INSERT INTO guilds (guild_id) VALUES ${rowsOf1(chunk.length)} ` +
+          `ON CONFLICT DO NOTHING`,
+      )
+      .bind(...chunk)
+      .run();
   }
   return revived;
 }
