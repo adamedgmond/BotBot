@@ -1,0 +1,27 @@
+scripts/commands.mjs
+  s_c031739fe76495::t_afec28f3beadb3 99-107
+src/db.ts
+  s_c031739fe76495::t_88713fc4b84e65 182-203
+src/handlers.ts
+  s_c031739fe76495::t_1500b614a5d50d 194-203,207,361-395
+README.md
+  s_c031739fe76495::t_3d3de94fb86f91 21,50,53-58
+TESTING.md
+  s_c031739fe76495::t_7f70cca2f45b96 124-132
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "61d4749659860f2a434b035ed1c15635e48514a7",
+  "prompts": {},
+  "sessions": {
+    "s_c031739fe76495": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f7b8f431-4e80-4da3-a23c-f9d7446b58c9",
+        "model": "unknown"
+      },
+      "human_author": "Adam Edgmond <me@adamedgmond.com>"
+    }
+  }
+}
