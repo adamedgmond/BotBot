@@ -69,21 +69,45 @@ export async function reportMatch(
   a: { userId: string; games: number; deck?: string },
   b: { userId: string; games: number; deck?: string },
 ): Promise<void> {
-  const insertReport =
-    "INSERT INTO reports (match_id, user_id, games, deck) VALUES (last_insert_rowid(), ?, ?, ?)";
+  // Capture the id with RETURNING rather than last_insert_rowid().
+  //
+  // last_insert_rowid() is correct for the first report and wrong for the
+  // second: inserting that first report moves it to the reports row's own
+  // rowid. In a database where those rowids happen to line up, as they do while
+  // both tables are fresh, the bug is invisible. After the first deletion they
+  // diverge, and the second player is either rejected by the foreign key or,
+  // worse, silently attached to whatever match shares that rowid.
+  const match = await db
+    .prepare(
+      "INSERT INTO matches (guild_id, season_id, reported_by, played_at) " +
+        "VALUES (?, ?, ?, ?) RETURNING match_id",
+    )
+    .bind(guildId, seasonId, reportedBy, now())
+    .first<{ match_id: number }>();
+  if (!match) throw new Error("match insert returned no id");
 
-  // batch() is a real transaction: sequential, non-concurrent, and rolled back
-  // as a unit. D1 has no interactive BEGIN/COMMIT, so all three writes must be
-  // handed over together or a failure could leave a match with one player.
-  await db.batch([
-    db
-      .prepare(
-        "INSERT INTO matches (guild_id, season_id, reported_by, played_at) VALUES (?, ?, ?, ?)",
-      )
-      .bind(guildId, seasonId, reportedBy, now()),
-    db.prepare(insertReport).bind(a.userId, a.games, a.deck ?? null),
-    db.prepare(insertReport).bind(b.userId, b.games, b.deck ?? null),
-  ]);
+  const insertReport =
+    "INSERT INTO reports (match_id, user_id, games, deck) VALUES (?, ?, ?, ?)";
+  try {
+    // batch() is a real transaction, so the two reports land together or not
+    // at all.
+    await db.batch([
+      db
+        .prepare(insertReport)
+        .bind(match.match_id, a.userId, a.games, a.deck ?? null),
+      db
+        .prepare(insertReport)
+        .bind(match.match_id, b.userId, b.games, b.deck ?? null),
+    ]);
+  } catch (err) {
+    // The match row is already committed. Without this it would linger with no
+    // players, showing up in /match recent as a result nobody played.
+    await db
+      .prepare("DELETE FROM matches WHERE match_id = ?")
+      .bind(match.match_id)
+      .run();
+    throw err;
+  }
 }
 
 // Binds ?1 guild_id, ?2 season_id, ?3 since. Callers continue numbering at ?4,
@@ -234,7 +258,10 @@ export async function undoLast(
     .prepare(
       "SELECT m.match_id FROM matches m JOIN reports r ON r.match_id = m.match_id " +
         "WHERE m.guild_id = ? AND r.user_id = ? AND m.played_at >= ? " +
-        "ORDER BY m.played_at DESC LIMIT 1",
+        // match_id breaks played_at ties. Two matches reported in the same
+        // second are indistinguishable by timestamp, and undoing an arbitrary
+        // one of them is the wrong answer half the time.
+        "ORDER BY m.played_at DESC, m.match_id DESC LIMIT 1",
     )
     .bind(guildId, userId, now() - UNDO_WINDOW_SECONDS)
     .first<{ match_id: number }>();
@@ -301,8 +328,9 @@ export async function recentMatches(
     .prepare(
       MATCH_SELECT +
         "WHERE m.guild_id = ?1 AND m.match_id IN " +
-        "(SELECT match_id FROM matches WHERE guild_id = ?1 ORDER BY played_at DESC LIMIT ?2) " +
-        "ORDER BY m.played_at DESC, r.games DESC",
+        "(SELECT match_id FROM matches WHERE guild_id = ?1 " +
+        "ORDER BY played_at DESC, match_id DESC LIMIT ?2) " +
+        "ORDER BY m.played_at DESC, m.match_id DESC, r.games DESC",
     )
     .bind(guildId, limit)
     .all<MatchRow>();

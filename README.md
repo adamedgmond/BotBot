@@ -25,6 +25,28 @@ by yequari; see [what changed](#what-changed-since-seekerbot).
 Running a beta? [TESTING.md](TESTING.md) is a Discord-only run-through for
 testers, with exact expected replies.
 
+## Local testing
+
+`npm run smoke` drives a locally running Worker with genuinely signed
+interactions, so it exercises signature verification, every handler, and the D1
+writes without touching Discord:
+
+```sh
+npx wrangler d1 migrations apply botbot --local
+npx wrangler dev --test-scheduled     # in another terminal
+npm run smoke                         # generates a test keypair on first run
+```
+
+The first run writes a throwaway keypair to `.smoke-key.pem` and its public half
+to `.dev.vars`, both gitignored, then asks you to restart `wrangler dev` so it
+picks the key up. `--test-scheduled` is what exposes the retention job; without
+it that check is skipped rather than failed.
+
+It cannot test anything Discord renders: whether an ephemeral flag really hides
+a reply, whether suppressed mentions really stay silent, or whether Discord
+enforces command permissions. Those need a real server, which is what
+[TESTING.md](TESTING.md) is for.
+
 ### Correcting the record
 
 `/undo` covers a fumbled score. Either player in the match can withdraw it

@@ -9,7 +9,8 @@
     "typecheck": "tsc --noEmit",
     "register": "node scripts/register.mjs",
     "db:migrate": "wrangler d1 migrations apply botbot --remote",
-    "db:migrate:local": "wrangler d1 migrations apply botbot --local"
+    "db:migrate:local": "wrangler d1 migrations apply botbot --local",
+    "smoke": "node scripts/smoke.mjs"
   },
   "dependencies": {
     "discord-interactions": "^4.1.0"
