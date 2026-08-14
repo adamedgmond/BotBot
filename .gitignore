@@ -5,3 +5,4 @@ node_modules/
 dist/
 *.log
 .smoke-key.pem
+.DS_Store
