@@ -66,8 +66,8 @@ export async function reportMatch(
   guildId: string,
   seasonId: number,
   reportedBy: string,
-  a: { userId: string; games: number; deck?: string },
-  b: { userId: string; games: number; deck?: string },
+  a: { userId: string; games: number },
+  b: { userId: string; games: number },
 ): Promise<void> {
   // Capture the id with RETURNING rather than last_insert_rowid().
   //
@@ -87,17 +87,17 @@ export async function reportMatch(
   if (!match) throw new Error("match insert returned no id");
 
   const insertReport =
-    "INSERT INTO reports (match_id, user_id, games, deck) VALUES (?, ?, ?, ?)";
+    "INSERT INTO reports (match_id, user_id, games) VALUES (?, ?, ?)";
   try {
     // batch() is a real transaction, so the two reports land together or not
     // at all.
     await db.batch([
       db
         .prepare(insertReport)
-        .bind(match.match_id, a.userId, a.games, a.deck ?? null),
+        .bind(match.match_id, a.userId, a.games),
       db
         .prepare(insertReport)
-        .bind(match.match_id, b.userId, b.games, b.deck ?? null),
+        .bind(match.match_id, b.userId, b.games),
     ]);
   } catch (err) {
     // The match row is already committed. Without this it would linger with no

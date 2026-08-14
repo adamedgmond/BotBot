@@ -127,8 +127,8 @@ async function report(
     guildId,
     season.season_id,
     callerId,
-    { userId: p1, games: g1, deck: o.deck1 ? String(o.deck1) : undefined },
-    { userId: p2, games: g2, deck: o.deck2 ? String(o.deck2) : undefined },
+    { userId: p1, games: g1 },
+    { userId: p2, games: g2 },
   );
 
   const verb = g1 === g2 ? "drew with" : g1 > g2 ? "defeated" : "lost to";
@@ -176,35 +176,61 @@ async function leaderboard(
   const o = optionMap(interaction.data?.options);
   const limit = Math.min(Math.max(Number(o.count ?? 10), 1), 25);
   const timeframe = o.timeframe ? String(o.timeframe) : "all";
+  const wanted = o.season ? String(o.season).trim() : "";
 
-  const season = await db.currentSeason(database, guildId);
-  if (!season) return reply("No matches have been recorded here yet.");
+  // A timeframe is measured from today, so pairing it with a season that ended
+  // last year quietly returns nothing. Refuse rather than answer misleadingly.
+  if (wanted && timeframe !== "all") {
+    throw new UserError("Ask for a season or a timeframe, not both.");
+  }
+
+  let season: db.Season;
+  let heading: string;
+  let note = "";
+
+  if (wanted) {
+    const found = await db.seasonsNamed(database, guildId, wanted);
+    if (found.length === 0) {
+      throw new UserError(
+        `No season called **${wanted}** here. \`/season list\` has the names.`,
+      );
+    }
+    // Names are not unique. Take the most recent and say so, rather than
+    // silently picking one of several and looking like the wrong answer.
+    season = found[0];
+    const span = season.ended_at
+      ? `<t:${season.started_at}:D> to <t:${season.ended_at}:D>`
+      : `<t:${season.started_at}:D> to now`;
+    heading = `**${season.name}** · ${span}`;
+    if (found.length > 1) {
+      note = `\n_${found.length} seasons share that name; this is the most recent._`;
+    }
+  } else {
+    const current = await db.currentSeason(database, guildId);
+    if (!current) return reply("No matches have been recorded here yet.");
+    season = current;
+    heading = `**${season.name}** leaderboard${timeframe === "all" ? "" : ` (past ${timeframe})`}`;
+  }
 
   const rows = await db.leaderboard(
     database,
     guildId,
     season.season_id,
-    since(timeframe),
+    wanted ? 0 : since(timeframe),
     limit,
   );
   if (rows.length === 0) {
-    return reply(`No matches recorded in **${season.name}** yet.`);
+    return reply(
+      wanted
+        ? `**${season.name}** recorded no matches.`
+        : `No matches recorded in **${season.name}** yet.`,
+    );
   }
 
-  return reply(
-    standings(
-      `**${season.name}** leaderboard${timeframe === "all" ? "" : ` (past ${timeframe})`}`,
-      rows,
-    ),
-  );
-}
-
-/** Shared by `/leaderboard` and `/season standings`. */
-function standings(heading: string, rows: db.StatRow[]): string {
   const lines = rows.map(
     (r, i) => `**${i + 1}.** <@${r.user_id}> · ${record(r)}`,
   );
-  return `${heading}\n${lines.join("\n")}`;
+  return reply(`${heading}\n${lines.join("\n")}${note}`);
 }
 
 async function undo(
@@ -356,41 +382,6 @@ async function season(
       return reply(
         `**${previous}** is now **${name}**. Every match recorded in it is unchanged.`,
       );
-    }
-
-    case "standings": {
-      const name = seasonName(o.name);
-      const found = await db.seasonsNamed(database, guildId, name);
-      if (found.length === 0) {
-        throw new UserError(
-          `No season called **${name}** here. \`/season list\` has the names.`,
-        );
-      }
-
-      // Names are not unique. Take the most recent and say so, rather than
-      // silently picking one of several and looking like the wrong answer.
-      const target = found[0];
-      const limit = Math.min(Math.max(Number(o.count ?? 10), 1), 25);
-      const rows = await db.leaderboard(
-        database,
-        guildId,
-        target.season_id,
-        0,
-        limit,
-      );
-
-      const span = target.ended_at
-        ? `<t:${target.started_at}:D> to <t:${target.ended_at}:D>`
-        : `<t:${target.started_at}:D> to now`;
-      if (rows.length === 0) {
-        return reply(`**${target.name}** (${span}) recorded no matches.`);
-      }
-
-      const note =
-        found.length > 1
-          ? `\n_${found.length} seasons share that name; this is the most recent._`
-          : "";
-      return reply(standings(`**${target.name}** · ${span}`, rows) + note);
     }
 
     case "current": {

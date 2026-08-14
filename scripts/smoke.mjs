@@ -277,15 +277,21 @@ section("season rollover and history");
   const list = await post(sub("season", "list"));
   check("both seasons are listed", has(list, "Smoke Season Renamed") && has(list, "Smoke Season 2"), list.content);
 
-  const past = await post(sub("season", "standings", [{ name: "name", type: 3, value: "smoke season renamed" }]));
+  const past = await post(command("leaderboard", [{ name: "season", type: 3, value: "smoke season renamed" }]));
   check(
     "past standings are readable, case-insensitively",
     has(past, "**Smoke Season Renamed**") && /\*\*1\.\*\* <@/.test(past.content),
     past.content,
   );
 
-  const nope = await post(sub("season", "standings", [{ name: "name", type: 3, value: "Never Existed" }]));
+  const nope = await post(command("leaderboard", [{ name: "season", type: 3, value: "Never Existed" }]));
   check("unknown season name is refused", has(nope, "No season called"), nope.content);
+
+  const both = await post(command("leaderboard", [
+    { name: "season", type: 3, value: "Smoke Season Renamed" },
+    { name: "timeframe", type: 3, value: "week" },
+  ]));
+  check("season plus timeframe is refused", has(both, "not both"), both.content);
 }
 
 section("scheduled retention");

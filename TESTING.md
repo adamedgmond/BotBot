@@ -77,15 +77,14 @@ Do these **before anyone reports a match**. They only work once.
       player cannot play themselves."
 - [ ] **3.5** Report a 0-0 → *(private)* "At least one player needs to have won
       a game."
-- [ ] **3.6** Report with `deck1` and `deck2` filled in → accepted normally.
-- [ ] **3.7** ★ Try to type a score of 10 → Discord refuses before it sends.
-- [ ] **3.8** `/leaderboard` → check the win-loss numbers by hand. Draws show as
+- [ ] **3.6** ★ Try to type a score of 10 → Discord refuses before it sends.
+- [ ] **3.7** `/leaderboard` → check the win-loss numbers by hand. Draws show as
       a third number, so 1-0-1 means one win, no losses, one draw.
-- [ ] **3.9** `/stats` with no player → your own record.
-- [ ] **3.10** `/stats player:@Player` → their record.
-- [ ] **3.11** `/stats` on someone who has never played → "@them has no matches
+- [ ] **3.8** `/stats` with no player → your own record.
+- [ ] **3.9** `/stats player:@Player` → their record.
+- [ ] **3.10** `/stats` on someone who has never played → "@them has no matches
       in **Beta Test** yet."
-- [ ] **3.12** ★ **Nobody gets pinged.** With several people on the leaderboard,
+- [ ] **3.11** ★ **Nobody gets pinged.** With several people on the leaderboard,
       confirm no one gets a notification. Names should appear as highlighted
       mentions but stay silent.
 
@@ -160,15 +159,15 @@ which is exactly the state you are now in.
       yet."
 - [ ] **7.6** `/season list` → both seasons, the old one with an end date.
 - [ ] **7.7** Report a match, then `/leaderboard` → only the new match counts.
-- [ ] **7.8** `/season standings name:"Beta Test Renamed"` → the **old**
-      season's table with its date range. This is the only way to read a
-      finished season, so check the numbers against what Rounds 3 to 6 left.
-- [ ] **7.9** `/season standings name:"beta test renamed"` in lower case → same
+- [ ] **7.8** `/leaderboard season:"Beta Test Renamed"` → the **old** season's
+      table with its date range. This is the only way to read a finished season,
+      so check the numbers against what Rounds 3 to 6 left.
+- [ ] **7.9** `/leaderboard season:"beta test renamed"` in lower case → same
       result. Matching ignores case.
-- [ ] **7.10** `/season standings name:"Nonexistent"` → *(private)* "No season
+- [ ] **7.10** `/leaderboard season:"Nonexistent"` → *(private)* "No season
       called **Nonexistent** here."
-- [ ] **7.11** Player runs `/season standings` → works. Reading standings is not
-      an admin action.
+- [ ] **7.11** `/leaderboard season:"Beta Test Renamed" timeframe:"This week"` →
+      *(private)* "Ask for a season or a timeframe, not both."
 - [ ] **7.12** Admin runs `/season start` with a name longer than 64 characters
       → *(private)* "Season names are limited to 64 characters."
 
@@ -214,5 +213,5 @@ indefinitely. That job runs weekly and cannot be triggered from Discord.
 - Deleting a match cannot be undone. The announcement is the only record.
 - A season, once started, cannot be deleted. `/season rename` works; removal
   does not.
-- `/leaderboard` and `/stats` always mean the current season. Past ones are read
-  with `/season standings`.
+- `/stats` always means the current season. `/leaderboard` takes an optional
+  `season` to read a finished one.

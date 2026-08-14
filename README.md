@@ -11,14 +11,13 @@ by yequari; see [what changed](#what-changed-since-seekerbot).
 
 | Command | Who | What |
 | --- | --- | --- |
-| `/report player1 games1 player2 games2 [deck1] [deck2]` | anyone | Record a match |
+| `/report player1 games1 player2 games2` | anyone | Record a match |
 | `/stats [player] [timeframe]` | anyone | A player's record this season |
-| `/leaderboard [count] [timeframe]` | anyone | Current standings |
+| `/leaderboard [season] [count] [timeframe]` | anyone | Standings, current season or a past one |
 | `/undo` | either player | Withdraw your most recent match, within 10 minutes |
 | `/match recent [count]` | anyone | List recent matches with their ids |
 | `/match delete <id>` | **admins** | Remove any recorded match |
 | `/season current` · `/season list` | anyone | Inspect seasons |
-| `/season standings <name>` | anyone | Final standings for any past season |
 | `/season start <name>` | **admins** | Close the season and start fresh |
 | `/season rename <name>` | **admins** | Rename the current season, keeping its matches |
 
@@ -72,11 +71,12 @@ season is stamped with an end date and new matches attach to the new one, so
 standings start clean while past results survive. A partial unique index
 guarantees each server has at most one open season at a time.
 
-`/leaderboard` and `/stats` always mean the season in progress. To read a
-finished one, `/season list` gives the names and `/season standings <name>`
-gives the table. Names are matched case-insensitively and are not required to
-be unique; if two seasons share one, the most recent wins and the reply says
-so.
+`/leaderboard` means the season in progress unless you name one:
+`/leaderboard season:"Season 2"`, with the names coming from `/season list`.
+Matching ignores case, and names are not required to be unique; if two seasons
+share one, the most recent wins and the reply says so. Naming a season and a
+timeframe together is refused, since a timeframe counts back from today and
+would silently return nothing for a season that has already ended.
 
 ### Naming the first season
 
@@ -240,7 +240,6 @@ fork, but its data model, one row per player per match, is SeekerBot's design.
   confirmation first, and `/match recent` to find the id.
 - **Every deletion is announced,** naming who removed what. Since the row is
   gone, that message is the receipt.
-- **Optional deck tracking** on `/report`, recorded per player.
 - **Data doesn't outlive its welcome.** Removing the bot from a server erases
   that server's history. See [Data retention](#data-retention).
 
@@ -260,7 +259,7 @@ fork, but its data model, one row per player per match, is SeekerBot's design.
 - Player stats and leaderboards, filterable by week, month, year, or all time
 - Per-server isolation. SeekerBot gave each server its own SQLite file; BotBot
   tags every row with its server, which is what D1 allows. Same outcome.
-- The `reports`-per-player data model, which is why scores, draws, and decks all
-  fit without contortions
+- The `reports`-per-player data model, which is why scores and draws fit
+  without contortions
 - Undo scoped to either player in the match, which is SeekerBot's rule. The
   loser is often the one who notices a wrong score.

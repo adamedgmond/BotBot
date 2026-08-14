@@ -23,8 +23,6 @@ export const commands = [
       { name: "games1", description: "Games won by the first player", type: 4, required: true, min_value: 0, max_value: 9 },
       { name: "player2", description: "Second player", type: 6, required: true },
       { name: "games2", description: "Games won by the second player", type: 4, required: true, min_value: 0, max_value: 9 },
-      { name: "deck1", description: "First player's deck (optional)", type: 3, required: false },
-      { name: "deck2", description: "Second player's deck (optional)", type: 3, required: false },
     ],
   },
   {
@@ -37,8 +35,9 @@ export const commands = [
   },
   {
     name: "leaderboard",
-    description: "Show the current season standings",
+    description: "Show the standings, for this season or a past one",
     options: [
+      { name: "season", description: "Past season name, as shown by /season list (default: current)", type: 3, required: false },
       { name: "count", description: "How many players to list (1-25, default 10)", type: 4, required: false, min_value: 1, max_value: 25 },
       TIMEFRAME,
     ],
@@ -94,15 +93,6 @@ export const commands = [
         type: 1,
         options: [
           { name: "name", description: "New name for the current season", type: 3, required: true },
-        ],
-      },
-      {
-        name: "standings",
-        description: "Final standings for any season, including past ones",
-        type: 1,
-        options: [
-          { name: "name", description: "Season name, as shown by /season list", type: 3, required: true },
-          { name: "count", description: "How many players to list (1-25, default 10)", type: 4, required: false, min_value: 1, max_value: 25 },
         ],
       },
       { name: "current", description: "Show the season in progress", type: 1 },
