@@ -1,0 +1,31 @@
+README.md
+  s_c031739fe76495::t_3f91d0347904a2 14,16,74-79,262-263
+TESTING.md
+  s_c031739fe76495::t_503f0b1a0d5607 80-81,83-85,87,162-165,167,169-170,216-217
+migrations/0003_drop_deck.sql
+  s_c031739fe76495::t_5608a733870c46 1-9
+scripts/commands.mjs
+  s_c031739fe76495::t_de3dd3ee5c5381 38,40
+scripts/smoke.mjs
+  s_c031739fe76495::t_63839b875e5e02 280,287,289-294
+src/db.ts
+  s_c031739fe76495::t_c0abced6c95362 69-70,90,97,100
+src/handlers.ts
+  s_c031739fe76495::t_b215e799612301 130-131,179,181-213,219,223-227,233
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "27131c1b029ced0f3d0aec44f908b1bcd9a6568b",
+  "prompts": {},
+  "sessions": {
+    "s_c031739fe76495": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f7b8f431-4e80-4da3-a23c-f9d7446b58c9",
+        "model": "unknown"
+      },
+      "human_author": "Adam Edgmond <me@adamedgmond.com>"
+    }
+  }
+}
