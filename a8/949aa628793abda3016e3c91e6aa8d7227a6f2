@@ -1,0 +1,19 @@
+TESTING.md
+  s_c031739fe76495::t_fb48b274921bd4 5-7,21-34,60,62-65,67-68,81,88-90,105-109,122,124-126,133-150,152,154,156-157,159,161-166,168,170-173,175,177-180,182,184,186-188,190,192,194,196,198,205-207,209,215-218
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a8949aa628793abda3016e3c91e6aa8d7227a6f2",
+  "prompts": {},
+  "sessions": {
+    "s_c031739fe76495": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f7b8f431-4e80-4da3-a23c-f9d7446b58c9",
+        "model": "unknown"
+      },
+      "human_author": "Adam Edgmond <me@adamedgmond.com>"
+    }
+  }
+}
