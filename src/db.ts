@@ -179,6 +179,28 @@ export async function renameSeason(
   return current.name;
 }
 
+/**
+ * Seasons in this guild with the given name, newest first.
+ *
+ * Nothing stops a guild from reusing a name, so this returns every match and
+ * lets the caller pick and disclose. Matching is case-insensitive because the
+ * name has to be typed by hand, from what `/season list` printed.
+ */
+export async function seasonsNamed(
+  db: D1Database,
+  guildId: string,
+  name: string,
+): Promise<Season[]> {
+  const { results } = await db
+    .prepare(
+      "SELECT * FROM seasons WHERE guild_id = ? AND name = ? COLLATE NOCASE " +
+        "ORDER BY started_at DESC",
+    )
+    .bind(guildId, name)
+    .all<Season>();
+  return results;
+}
+
 export async function listSeasons(
   db: D1Database,
   guildId: string,

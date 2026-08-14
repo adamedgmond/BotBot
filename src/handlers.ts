@@ -191,13 +191,20 @@ async function leaderboard(
     return reply(`No matches recorded in **${season.name}** yet.`);
   }
 
+  return reply(
+    standings(
+      `**${season.name}** leaderboard${timeframe === "all" ? "" : ` (past ${timeframe})`}`,
+      rows,
+    ),
+  );
+}
+
+/** Shared by `/leaderboard` and `/season standings`. */
+function standings(heading: string, rows: db.StatRow[]): string {
   const lines = rows.map(
     (r, i) => `**${i + 1}.** <@${r.user_id}> · ${record(r)}`,
   );
-  return reply(
-    `**${season.name}** leaderboard${timeframe === "all" ? "" : ` (past ${timeframe})`}\n` +
-      lines.join("\n"),
-  );
+  return `${heading}\n${lines.join("\n")}`;
 }
 
 async function undo(
@@ -349,6 +356,41 @@ async function season(
       return reply(
         `**${previous}** is now **${name}**. Every match recorded in it is unchanged.`,
       );
+    }
+
+    case "standings": {
+      const name = seasonName(o.name);
+      const found = await db.seasonsNamed(database, guildId, name);
+      if (found.length === 0) {
+        throw new UserError(
+          `No season called **${name}** here. \`/season list\` has the names.`,
+        );
+      }
+
+      // Names are not unique. Take the most recent and say so, rather than
+      // silently picking one of several and looking like the wrong answer.
+      const target = found[0];
+      const limit = Math.min(Math.max(Number(o.count ?? 10), 1), 25);
+      const rows = await db.leaderboard(
+        database,
+        guildId,
+        target.season_id,
+        0,
+        limit,
+      );
+
+      const span = target.ended_at
+        ? `<t:${target.started_at}:D> to <t:${target.ended_at}:D>`
+        : `<t:${target.started_at}:D> to now`;
+      if (rows.length === 0) {
+        return reply(`**${target.name}** (${span}) recorded no matches.`);
+      }
+
+      const note =
+        found.length > 1
+          ? `\n_${found.length} seasons share that name; this is the most recent._`
+          : "";
+      return reply(standings(`**${target.name}** · ${span}`, rows) + note);
     }
 
     case "current": {

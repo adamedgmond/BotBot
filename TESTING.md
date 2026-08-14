@@ -121,6 +121,15 @@ Do these **before anyone reports a match**. They only work once.
       yet."
 - [ ] **6.6** `/season list` → both seasons, the old one with an end date.
 - [ ] **6.7** Report a match, then `/leaderboard` → only the new match counts.
+- [ ] **6.9** `/season standings name:"Beta Test Renamed"` → the **old** season's
+      table, with its date range. This is the one way to read a finished season,
+      so check the numbers match what Round 3 left behind.
+- [ ] **6.10** `/season standings name:"beta test renamed"` in lower case → same
+      result. Matching ignores case.
+- [ ] **6.11** `/season standings name:"Nonexistent"` → *(private)* "No season
+      called **Nonexistent** here."
+- [ ] **6.12** A non-admin runs `/season standings` → works. Reading standings
+      is not an admin action.
 - [ ] **6.8** Admin runs `/season start` with a name longer than 64 characters →
       *(private)* "Season names are limited to 64 characters."
 

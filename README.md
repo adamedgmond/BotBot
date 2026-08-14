@@ -18,6 +18,7 @@ by yequari; see [what changed](#what-changed-since-seekerbot).
 | `/match recent [count]` | anyone | List recent matches with their ids |
 | `/match delete <id>` | **admins** | Remove any recorded match |
 | `/season current` · `/season list` | anyone | Inspect seasons |
+| `/season standings <name>` | anyone | Final standings for any past season |
 | `/season start <name>` | **admins** | Close the season and start fresh |
 | `/season rename <name>` | **admins** | Rename the current season, keeping its matches |
 
@@ -46,8 +47,14 @@ doubles as the audit trail.
 
 Resetting the record is `/season start "Season 2"`. Nothing is deleted; the old
 season is stamped with an end date and new matches attach to the new one, so
-standings start clean while past results stay queryable. A partial unique index
+standings start clean while past results survive. A partial unique index
 guarantees each server has at most one open season at a time.
+
+`/leaderboard` and `/stats` always mean the season in progress. To read a
+finished one, `/season list` gives the names and `/season standings <name>`
+gives the table. Names are matched case-insensitively and are not required to
+be unique; if two seasons share one, the most recent wins and the reply says
+so.
 
 ### Naming the first season
 

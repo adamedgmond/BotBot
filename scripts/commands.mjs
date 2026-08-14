@@ -96,6 +96,15 @@ export const commands = [
           { name: "name", description: "New name for the current season", type: 3, required: true },
         ],
       },
+      {
+        name: "standings",
+        description: "Final standings for any season, including past ones",
+        type: 1,
+        options: [
+          { name: "name", description: "Season name, as shown by /season list", type: 3, required: true },
+          { name: "count", description: "How many players to list (1-25, default 10)", type: 4, required: false, min_value: 1, max_value: 25 },
+        ],
+      },
       { name: "current", description: "Show the season in progress", type: 1 },
       { name: "list", description: "List past seasons", type: 1 },
     ],
