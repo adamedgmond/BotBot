@@ -1,0 +1,19 @@
+.gitignore
+  s_c031739fe76495::t_2ba7d59d28399f 8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d9abf7a220e08b753ceff7a6d5777548c662bf37",
+  "prompts": {},
+  "sessions": {
+    "s_c031739fe76495": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f7b8f431-4e80-4da3-a23c-f9d7446b58c9",
+        "model": "unknown"
+      },
+      "human_author": "Adam Edgmond <me@adamedgmond.com>"
+    }
+  }
+}
