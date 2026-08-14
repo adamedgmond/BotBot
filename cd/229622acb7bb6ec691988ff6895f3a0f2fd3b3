@@ -1,0 +1,27 @@
+.gitignore
+  s_c031739fe76495::t_aadee97d0b624c 7
+package.json
+  s_c031739fe76495::t_c833a2b0aca684 12-13
+scripts/smoke.mjs
+  s_c031739fe76495::t_23f70de1c63f23 1-321
+src/db.ts
+  s_c031739fe76495::t_388a4111876c7f 72-87,89-110,261-264,331-333
+README.md
+  s_c031739fe76495::t_e314c5dbea78c1 28-49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "cd229622acb7bb6ec691988ff6895f3a0f2fd3b3",
+  "prompts": {},
+  "sessions": {
+    "s_c031739fe76495": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f7b8f431-4e80-4da3-a23c-f9d7446b58c9",
+        "model": "unknown"
+      },
+      "human_author": "Adam Edgmond <me@adamedgmond.com>"
+    }
+  }
+}
