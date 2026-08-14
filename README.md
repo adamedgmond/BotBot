@@ -12,12 +12,12 @@ by yequari; see [what changed](#what-changed-since-seekerbot).
 | Command | Who | What |
 | --- | --- | --- |
 | `/report player1 games1 player2 games2` | anyone | Record a match |
-| `/stats [player] [timeframe]` | anyone | A player's record this season |
-| `/leaderboard [season] [count] [timeframe]` | anyone | Standings, current season or a past one |
+| `/stats [player]` | anyone | A player's record this season |
+| `/leaderboard [season] [count]` | anyone | Standings, current season or a past one |
 | `/undo` | either player | Withdraw your most recent match, within 10 minutes |
 | `/match recent [count]` | anyone | List recent matches with their ids |
 | `/match delete <id>` | **admins** | Remove any recorded match |
-| `/season current` · `/season list` | anyone | Inspect seasons |
+| `/season list` | anyone | Every season, with dates |
 | `/season start <name>` | **admins** | Close the season and start fresh |
 | `/season rename <name>` | **admins** | Rename the current season, keeping its matches |
 
@@ -74,9 +74,11 @@ guarantees each server has at most one open season at a time.
 `/leaderboard` means the season in progress unless you name one:
 `/leaderboard season:"Season 2"`, with the names coming from `/season list`.
 Matching ignores case, and names are not required to be unique; if two seasons
-share one, the most recent wins and the reply says so. Naming a season and a
-timeframe together is refused, since a timeframe counts back from today and
-would silently return nothing for a season that has already ended.
+share one, the most recent wins and the reply says so.
+
+Seasons are the only way BotBot buckets time. There is no week or month filter,
+because a season already answers that question and two overlapping time models
+is one too many.
 
 ### Naming the first season
 
@@ -247,8 +249,8 @@ fork, but its data model, one row per player per match, is SeekerBot's design.
 
 - **A longer, accountable undo.** Ten minutes instead of five, and withdrawing a
   match announces it in the channel, naming both players and whoever ran it.
-- **Slash commands with real inputs:** labelled fields, a player picker, scores
-  validated before submission, timeframes as a menu.
+- **Slash commands with real inputs:** labelled fields, a player picker, and
+  scores validated before submission.
 - **Names are always current.** Players render as live mentions.
 - **No message-reading permission,** because everything is a slash command.
 - **Nothing to keep running.** Workers wake on demand.
@@ -256,7 +258,7 @@ fork, but its data model, one row per player per match, is SeekerBot's design.
 ### Carried over
 
 - Match reporting with per-game scores, so 2–0 and 2–1 stay distinguishable
-- Player stats and leaderboards, filterable by week, month, year, or all time
+- Player stats and leaderboards
 - Per-server isolation. SeekerBot gave each server its own SQLite file; BotBot
   tags every row with its server, which is what D1 allows. Same outcome.
 - The `reports`-per-player data model, which is why scores and draws fit

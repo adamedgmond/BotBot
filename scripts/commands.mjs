@@ -1,19 +1,6 @@
 // Slash command definitions. Shared by scripts/register.mjs.
 // Option types: 3=STRING, 4=INTEGER, 6=USER, 1=SUB_COMMAND
 
-const TIMEFRAME = {
-  name: "timeframe",
-  description: "How far back to look (default: whole season)",
-  type: 3,
-  required: false,
-  choices: [
-    { name: "This week", value: "week" },
-    { name: "This month", value: "month" },
-    { name: "This year", value: "year" },
-    { name: "Whole season", value: "all" },
-  ],
-};
-
 export const commands = [
   {
     name: "report",
@@ -30,7 +17,6 @@ export const commands = [
     description: "Show a player's record this season",
     options: [
       { name: "player", description: "Whose stats to show (default: you)", type: 6, required: false },
-      TIMEFRAME,
     ],
   },
   {
@@ -39,7 +25,6 @@ export const commands = [
     options: [
       { name: "season", description: "Past season name, as shown by /season list (default: current)", type: 3, required: false },
       { name: "count", description: "How many players to list (1-25, default 10)", type: 4, required: false, min_value: 1, max_value: 25 },
-      TIMEFRAME,
     ],
   },
   {
@@ -95,8 +80,7 @@ export const commands = [
           { name: "name", description: "New name for the current season", type: 3, required: true },
         ],
       },
-      { name: "current", description: "Show the season in progress", type: 1 },
-      { name: "list", description: "List past seasons", type: 1 },
+      { name: "list", description: "List every season, current one included", type: 1 },
     ],
   },
 ];

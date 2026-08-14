@@ -110,8 +110,8 @@ export async function reportMatch(
   }
 }
 
-// Binds ?1 guild_id, ?2 season_id, ?3 since. Callers continue numbering at ?4,
-// so adding a parameter here means renumbering both of them.
+// Binds ?1 guild_id and ?2 season_id. Callers continue numbering at ?3, so
+// adding a parameter here means renumbering both of them.
 const STATS_SELECT = `
   SELECT r.user_id AS user_id,
          SUM(CASE WHEN r.games > o.games THEN 1 ELSE 0 END) AS wins,
@@ -121,21 +121,20 @@ const STATS_SELECT = `
   FROM reports r
   JOIN reports o ON o.match_id = r.match_id AND o.user_id != r.user_id
   JOIN matches m ON m.match_id = r.match_id
-  WHERE m.guild_id = ?1 AND m.season_id = ?2 AND m.played_at >= ?3
+  WHERE m.guild_id = ?1 AND m.season_id = ?2
 `;
 
 export async function leaderboard(
   db: D1Database,
   guildId: string,
   seasonId: number,
-  since: number,
   limit: number,
 ): Promise<StatRow[]> {
   const { results } = await db
     .prepare(
-      `${STATS_SELECT} GROUP BY r.user_id ORDER BY wins DESC, matches ASC LIMIT ?4`,
+      `${STATS_SELECT} GROUP BY r.user_id ORDER BY wins DESC, matches ASC LIMIT ?3`,
     )
-    .bind(guildId, seasonId, since, limit)
+    .bind(guildId, seasonId, limit)
     .all<StatRow>();
   return results;
 }
@@ -144,12 +143,11 @@ export async function statsFor(
   db: D1Database,
   guildId: string,
   seasonId: number,
-  since: number,
   userId: string,
 ): Promise<StatRow | null> {
   return db
-    .prepare(`${STATS_SELECT} AND r.user_id = ?4 GROUP BY r.user_id`)
-    .bind(guildId, seasonId, since, userId)
+    .prepare(`${STATS_SELECT} AND r.user_id = ?3 GROUP BY r.user_id`)
+    .bind(guildId, seasonId, userId)
     .first<StatRow>();
 }
 

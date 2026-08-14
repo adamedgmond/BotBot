@@ -11,18 +11,6 @@ import { isAdmin, optionMap, subcommand, type Interaction } from "./types.js";
 /** custom_id for the delete-confirmation button: `match:delete:<id>`. */
 const DELETE_PREFIX = "match:delete:";
 
-const TIMEFRAMES: Record<string, number> = {
-  week: 7 * 86400,
-  month: 30 * 86400,
-  year: 365 * 86400,
-  all: 0,
-};
-
-function since(timeframe: string): number {
-  const span = TIMEFRAMES[timeframe] ?? 0;
-  return span === 0 ? 0 : db.now() - span;
-}
-
 const UNDO_MINUTES = Math.round(db.UNDO_WINDOW_SECONDS / 60);
 
 function record(r: db.StatRow): string {
@@ -147,23 +135,16 @@ async function stats(
 ): Promise<Response> {
   const o = optionMap(interaction.data?.options);
   const target = o.player ? String(o.player) : callerId;
-  const timeframe = o.timeframe ? String(o.timeframe) : "all";
 
   const season = await db.currentSeason(database, guildId);
   if (!season) return reply("No matches have been recorded here yet.");
 
-  const row = await db.statsFor(
-    database,
-    guildId,
-    season.season_id,
-    since(timeframe),
-    target,
-  );
+  const row = await db.statsFor(database, guildId, season.season_id, target);
   if (!row) {
     return reply(`<@${target}> has no matches in **${season.name}** yet.`);
   }
   return reply(
-    `**<@${target}>** · ${season.name}${timeframe === "all" ? "" : ` (past ${timeframe})`}\n` +
+    `**<@${target}>** · ${season.name}\n` +
       `${record(row)} across ${row.matches} match${row.matches === 1 ? "" : "es"}.`,
   );
 }
@@ -175,14 +156,7 @@ async function leaderboard(
 ): Promise<Response> {
   const o = optionMap(interaction.data?.options);
   const limit = Math.min(Math.max(Number(o.count ?? 10), 1), 25);
-  const timeframe = o.timeframe ? String(o.timeframe) : "all";
   const wanted = o.season ? String(o.season).trim() : "";
-
-  // A timeframe is measured from today, so pairing it with a season that ended
-  // last year quietly returns nothing. Refuse rather than answer misleadingly.
-  if (wanted && timeframe !== "all") {
-    throw new UserError("Ask for a season or a timeframe, not both.");
-  }
 
   let season: db.Season;
   let heading: string;
@@ -209,16 +183,10 @@ async function leaderboard(
     const current = await db.currentSeason(database, guildId);
     if (!current) return reply("No matches have been recorded here yet.");
     season = current;
-    heading = `**${season.name}** leaderboard${timeframe === "all" ? "" : ` (past ${timeframe})`}`;
+    heading = `**${season.name}** leaderboard`;
   }
 
-  const rows = await db.leaderboard(
-    database,
-    guildId,
-    season.season_id,
-    wanted ? 0 : since(timeframe),
-    limit,
-  );
+  const rows = await db.leaderboard(database, guildId, season.season_id, limit);
   if (rows.length === 0) {
     return reply(
       wanted
@@ -381,15 +349,6 @@ async function season(
       }
       return reply(
         `**${previous}** is now **${name}**. Every match recorded in it is unchanged.`,
-      );
-    }
-
-    case "current": {
-      const current = await db.currentSeason(database, guildId);
-      return reply(
-        current
-          ? `Current season: **${current.name}**, started <t:${current.started_at}:D>.`
-          : "No season has started here yet; it opens with the first `/report`.",
       );
     }
 

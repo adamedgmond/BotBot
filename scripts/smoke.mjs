@@ -287,11 +287,6 @@ section("season rollover and history");
   const nope = await post(command("leaderboard", [{ name: "season", type: 3, value: "Never Existed" }]));
   check("unknown season name is refused", has(nope, "No season called"), nope.content);
 
-  const both = await post(command("leaderboard", [
-    { name: "season", type: 3, value: "Smoke Season Renamed" },
-    { name: "timeframe", type: 3, value: "week" },
-  ]));
-  check("season plus timeframe is refused", has(both, "not both"), both.content);
 }
 
 section("scheduled retention");

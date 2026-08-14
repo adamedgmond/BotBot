@@ -47,8 +47,7 @@ Open an issue at <https://github.com/adamedgmond/BotBot/issues> with:
 
 Do these **before anyone reports a match**. They only work once.
 
-- [ ] **1.1** `/season current` → "No season has started here yet; it opens
-      with the first `/report`."
+- [ ] **1.1** `/season list` → "No seasons here yet."
 - [ ] **1.2** `/leaderboard` → "No matches have been recorded here yet."
 - [ ] **1.3** `/match recent` → "No matches have been recorded here yet."
 - [ ] **1.4** `/stats` → "No matches have been recorded here yet."
@@ -64,8 +63,7 @@ Do these **before anyone reports a match**. They only work once.
       begun."
 - [ ] **2.4** `/leaderboard` → "No matches recorded in **Beta Test** yet."
       Note this is **different** from the message in 1.2. A season now exists.
-- [ ] **2.5** `/season current` → names Beta Test with today's date.
-- [ ] **2.6** `/season list` → one entry, Beta Test, running to "now".
+- [ ] **2.5** `/season list` → one entry, Beta Test, running to "now".
 
 ## Round 3: reporting matches
 
@@ -166,23 +164,19 @@ which is exactly the state you are now in.
       result. Matching ignores case.
 - [ ] **7.10** `/leaderboard season:"Nonexistent"` → *(private)* "No season
       called **Nonexistent** here."
-- [ ] **7.11** `/leaderboard season:"Beta Test Renamed" timeframe:"This week"` →
-      *(private)* "Ask for a season or a timeframe, not both."
-- [ ] **7.12** Admin runs `/season start` with a name longer than 64 characters
+- [ ] **7.11** Admin runs `/season start` with a name longer than 64 characters
       → *(private)* "Season names are limited to 64 characters."
 
 ## Round 8: odd inputs
 
 - [ ] **8.1** `/leaderboard count:1` → exactly one player.
-- [ ] **8.2** `/leaderboard timeframe:This week` → only recent matches.
-- [ ] **8.3** `/stats timeframe:This year` → works.
-- [ ] **8.4** ★ Try any BotBot command in a **direct message** to the bot. Either
+- [ ] **8.2** ★ Try any BotBot command in a **direct message** to the bot. Either
       it is unavailable, or you get "BotBot only works inside a server."
-- [ ] **8.5** Report a match against a **bot account**. It is currently allowed.
+- [ ] **8.3** Report a match against a **bot account**. It is currently allowed.
       Tell us if you think it should not be.
-- [ ] **8.6** Report the same match twice → both are recorded, as two separate
+- [ ] **8.4** Report the same match twice → both are recorded, as two separate
       matches. Expected, but say so if it feels wrong.
-- [ ] **8.7** ★ Have an admin remove Player's access under **Server Settings →
+- [ ] **8.5** ★ Have an admin remove Player's access under **Server Settings →
       Integrations → BotBot**, then have Player try a command. It should not
       appear for them at all. Restore it afterwards.
 
@@ -215,3 +209,4 @@ indefinitely. That job runs weekly and cannot be triggered from Discord.
   does not.
 - `/stats` always means the current season. `/leaderboard` takes an optional
   `season` to read a finished one.
+- There is no week or month filter. Seasons are how BotBot buckets time.
